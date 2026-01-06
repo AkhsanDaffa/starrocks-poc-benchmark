@@ -1,0 +1,48 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-source
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=zim_analytics
+    networks:
+      - starrocks-net
+
+  # 1. StarRocks Frontend (FE) - Otak & Manajernya
+  starrocks-fe:
+    image: starrocks/fe-ubuntu:latest
+    hostname: starrocks-fe
+    container_name: starrocks-fe
+    command: /opt/starrocks/fe/bin/start_fe.sh
+    ports:
+      - 8030:8030 # Web UI (User Interface)
+      - 9020:9020 # Internal RPC
+      - 9030:9030 # Port untuk koneksi SQL (Penting!)
+    environment:
+      - TZ=Asia/Jakarta
+    mem_limit: 2g # Limit RAM 2GB
+    networks:
+      - starrocks-net
+
+  # 2. StarRocks Backend (BE) - Gudang Datanya
+  starrocks-be:
+    image: starrocks/be-ubuntu:latest
+    hostname: starrocks-be
+    container_name: starrocks-be
+    command: /opt/starrocks/be/bin/start_be.sh
+    ports:
+      - 8040:8040 # Web status BE
+      - 9050:9050 # Internal Data transfer
+    environment:
+      - TZ=Asia/Jakarta
+    depends_on:
+      - starrocks-fe
+    mem_limit: 4g # Limit RAM 4GB
+    networks:
+      - starrocks-net
+
+networks:
+  starrocks-net:
+    driver: bridge
