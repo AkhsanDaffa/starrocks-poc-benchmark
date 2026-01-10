@@ -2,6 +2,8 @@ services:
   mysql:
     image: mysql:8.0
     container_name: mysql-source
+    hostname: mysql-source
+    restart: always
     ports:
       - "3306:3306"
     environment:
@@ -17,29 +19,56 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - data-network
+      data-network:
+        ipv4_address: 172.25.0.2
   
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-source
+    hostname: postgres-source
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=zim_pg_analytics
+      - TZ=Asia/Jakarta
+    command: >
+      postgres 
+      -c wal_level=logical 
+      -c max_replication_slots=4 
+      -c max_wal_senders=4
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      data-network:
+        ipv4_address: 172.25.0.8
+
   starrocks-fe:
     image: starrocks/fe-ubuntu:latest
     hostname: starrocks-fe
     container_name: starrocks-fe
+    restart: always
     command: /opt/starrocks/fe/bin/start_fe.sh
     ports:
       - 8030:8030
       - 9020:9020
-      - 9030:9030 # Port SQL
+      - 9030:9030
     environment:
       - TZ=Asia/Jakarta
     mem_limit: 2g
     volumes:
       - starrocks_fe_meta:/opt/starrocks/fe/meta
     networks:
-      - data-network
+      data-network:
+        ipv4_address: 172.25.0.3
 
   starrocks-be:
     image: starrocks/be-ubuntu:latest
     hostname: starrocks-be
     container_name: starrocks-be
+    restart: always
     command: /opt/starrocks/be/bin/start_be.sh
     ports:
       - 8040:8040
@@ -52,11 +81,13 @@ services:
     volumes:
       - starrocks_be_storage:/opt/starrocks/be/storage
     networks:
-      - data-network
-  
+      data-network:
+        ipv4_address: 172.25.0.4
+
   kafka:
     image: apache/kafka:3.7.0
     container_name: kafka
+    restart: always
     ports:
       - "9092:9092"
     environment:
@@ -74,11 +105,13 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
-      - data-network
-  
+      data-network:
+        ipv4_address: 172.25.0.5
+
   connect:
     image: debezium/connect:2.5
     container_name: connect
+    restart: always
     ports:
       - "8083:8083"
     environment:
@@ -94,11 +127,13 @@ services:
     depends_on:
       - kafka
     networks:
-      - data-network
-  
+      data-network:
+        ipv4_address: 172.25.0.6
+
   kafka-ui:
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
+    restart: always
     ports:
       - "8989:8080"
     depends_on:
@@ -111,10 +146,12 @@ services:
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: debezium
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect:8083
     networks:
-      - data-network
+      data-network:
+        ipv4_address: 172.25.0.7
 
 volumes:
   mysql_data:
+  postgres_data:
   starrocks_fe_meta:
   starrocks_be_storage:
   kafka_data:
@@ -122,3 +159,6 @@ volumes:
 networks:
   data-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16  # <-- GANTI KE 172.25

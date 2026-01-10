@@ -10,7 +10,7 @@ db_config = {
     'user': 'root',           
     'password': '',           # Kosongkan sesuai request
     'database': 'zim_analytics', # Nama DB Anda
-    'port': 3306              # Port standar MySQL dari docker-compose
+    'port': 2026              # Port standar MySQL dari docker-compose
 }
 
 fake = Faker('id_ID')
