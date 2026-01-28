@@ -6,11 +6,11 @@ from datetime import datetime
 
 # --- KONFIGURASI KONEKSI POSTGRESQL ---
 db_config = {
-    'host': '192.168.200.212',
+    'host': 'localhost',
     'user': 'postgres',           # User default container
     'password': 'postgres',       # Password dari docker-compose
     'database': 'zim_pg_analytics', # Nama DB baru
-    'port': 5500                  # Port standar Postgres
+    'port': 5432                 # Port standar Postgres 5500 (Kantor)
 }
 
 fake = Faker('id_ID')
